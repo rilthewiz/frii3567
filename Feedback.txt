@@ -1,0 +1,13 @@
+Feedback
+
+It was a simple ask. Im not sure what this data will help with. I guess its the idea to do stuff like this but for real bussiness asks to reduce waste. 
+
+My skills are more infrastrucutre related but i was able to complete this ask. 
+
+I added Last updated time check to make sure when this data is shared its not old data 
+
+this took me about 3 hours most of the time was trying to get past 429 and a captcha error.
+
+Please see screenshots in Doc folder
+
+http://127.0.0.1:5000/
