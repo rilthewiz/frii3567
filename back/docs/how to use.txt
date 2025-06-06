@@ -1,0 +1,8 @@
+how to use
+
+download and cd to :
+{locationyouunzipped}\dogeprojpjl\back
+
+open cmd while in above dir run {source venv/bin/activate}
+
+you will see it start the flask app after that click the link to local host

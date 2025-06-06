@@ -1,0 +1,127 @@
+# Flask + Gunicorn + Nginx Deployment Steps (Ubuntu Linux)
+
+1. **Update and Install Required Packages**
+------------------------------------------------
+sudo apt update
+sudo apt install python3-pip python3-venv nginx -y
+
+2. **Clone or Upload Your Project to the VM**
+------------------------------------------------
+# Example: Place your project in /home/youruser/dogeprojpjl/back
+
+3. **Set Up Python Virtual Environment**
+------------------------------------------------
+cd /home/youruser/dogeprojpjl/back
+python3 -m venv venv
+source venv/bin/activate
+
+4. **Install Python Dependencies**
+------------------------------------------------
+pip install flask gunicorn requests
+
+# (Add any other dependencies your project needs)
+
+5. **Test Gunicorn Locally**
+------------------------------------------------
+gunicorn -w 3 -b 127.0.0.1:8000 deploy:app
+
+# (If your main file is app.py, use app:app)
+
+# Visit http://<your-vm-ip>:8000 to check if it works (open port 8000 for this test if needed)
+
+6. **Set Up Gunicorn as a Systemd Service**
+------------------------------------------------
+sudo nano /etc/systemd/system/gunicorn.service
+
+# Paste the following (edit paths and user as needed):
+
+[Unit]
+Description=Gunicorn instance to serve Flask eCFR App
+After=network.target
+
+[Service]
+User=youruser
+Group=www-data
+WorkingDirectory=/home/youruser/dogeprojpjl/back
+Environment="PATH=/home/youruser/dogeprojpjl/back/venv/bin"
+ExecStart=/home/youruser/dogeprojpjl/back/venv/bin/gunicorn -w 3 -b 127.0.0.1:8000 deploy:app
+
+[Install]
+WantedBy=multi-user.target
+
+# Save and exit.
+
+sudo systemctl daemon-reload
+sudo systemctl enable gunicorn
+sudo systemctl start gunicorn
+
+7. **Configure Nginx as a Reverse Proxy**
+------------------------------------------------
+sudo nano /etc/nginx/sites-available/flaskecfr
+
+# Paste the following (edit server_name as needed):
+
+server {
+    listen 80;
+    server_name yourdomain.com _;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+sudo ln -s /etc/nginx/sites-available/flaskecfr /etc/nginx/sites-enabled
+sudo nginx -t
+sudo systemctl restart nginx
+
+8. **(Optional) Add SSL with a Self-Signed Certificate**
+------------------------------------------------
+sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout /etc/ssl/private/flaskecfr.key \
+  -out /etc/ssl/certs/flaskecfr.crt \
+  -subj "/CN=yourdomain.com"
+
+# Edit your Nginx config to add:
+
+server {
+    listen 443 ssl;
+    server_name yourdomain.com _;
+
+    ssl_certificate /etc/ssl/certs/flaskecfr.crt;
+    ssl_certificate_key /etc/ssl/private/flaskecfr.key;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+server {
+    listen 80;
+    server_name yourdomain.com _;
+    return 301 https://$host$request_uri;
+}
+
+sudo nginx -t
+sudo systemctl reload nginx
+
+# For production, use Let's Encrypt:
+# sudo apt install certbot python3-certbot-nginx -y
+# sudo certbot --nginx -d yourdomain.com
+
+9. **Open Ports in Azure**
+------------------------------------------------
+# Make sure your Azure Network Security Group allows inbound traffic on port 80 (and 443 for HTTPS).
+
+10. **Visit Your App**
+------------------------------------------------
+# Go to http://<your-vm-ip>/ or https://<yourdomain.com>/ in your browser.
+
+# Done!

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>eCFR Data Analysis</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f4f4f4; }
+    </style>
+</head>
+<body>
+    <h1>eCFR Data Analysis</h1>
+    <button onclick="fetchAgencies()">Load Agencies</button>
+    <button onclick="triggerDownload()">Download Data</button>
+    <table id="agencyTable">
+        <thead>
+            <tr>
+                <th>Agency Name</th>
+                <th>Word Count</th>
+                <th>Checksum</th>
+                <th>Historical Changes</th>
+                <th>Last Updated</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        async function fetchAgencies() {
+            try {
+                const res = await fetch('/api/agencies');
+                const agencies = await res.json();
+                const tbody = document.querySelector('#agencyTable tbody');
+                tbody.innerHTML = '';
+                agencies.forEach(agency => {
+                    const row = `<tr>
+                        <td>${agency.name}</td>
+                        <td>${agency.word_count}</td>
+                        <td>${agency.checksum}</td>
+                        <td>${agency.historical_changes}</td>
+                        <td>${agency.last_updated}</td>
+                    </tr>`;
+                    tbody.innerHTML += row;
+                });
+            } catch (error) {
+                console.error('Error fetching agencies:', error);
+            }
+        }
+        
+        async function triggerDownload() {
+            const res = await fetch('/api/download', { method: 'POST' });
+            const data = await res.json();
+            alert(data.status);
+        }
+    </script>
+</body>
+</html>
